@@ -1,0 +1,92 @@
+name: Scheduled AUR package update Workflow
+on:
+  schedule:
+    - cron: "30 15 * * 6"
+
+env:
+  AUR_PKG_NAME: "urbackup2-server"
+
+
+jobs:
+  update:
+    name: "Update repository"
+    runs-on: ubuntu-latest
+    container:
+      image: archlinux/archlinux:latest
+
+    steps:
+      - name: Store the SSH key
+        run: |
+          echo "${{ secrets.MY_SSH_KEY }}" | install -Dm600 /dev/stdin /root/.ssh/id_rsa
+
+      - name: Get time for cache
+        id: cache_time
+        run: echo "::set-output name=time::$(date +%F-%T)"
+
+      - name: Set up cache
+        uses: actions/cache@master
+        with:
+          path: /var/cache/pacman/pkg
+          key: pacman-cache-x86_64-${{ steps.cache_time.outputs.time }}
+          restore-keys: pacman-cache-x86_64-
+
+      - name: Install dependencies
+        run: |
+          curl -LO "https://repo.archlinuxcn.org/x86_64/${patched_glibc}" && \
+          bsdtar -C / -xvf "$patched_glibc" && \
+          rm ${patched_glibc} && \
+          pacman -Syu --needed --noconfirm && \
+          pacman -S --needed --noconfirm git binutils pacman-contrib openssh rsync
+        env:
+          patched_glibc: glibc-linux4-2.33-4-x86_64.pkg.tar.zst
+
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Update if necessary
+        env:
+          GIT_SSH_COMMAND: "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
+        run: |
+          current=$(grep -P "^pkgver" PKGBUILD | cut -d= -f2)
+          latest=$(curl --silent "https://www.urbackup.org/downloads/Server/?C=M;O=D" | grep "folder.gif" | head -1 | sed -r 's/.*href="([^"]+)\/.*/\1/g')
+
+          aurRepoDir=/tmp/${AUR_PKG_NAME}
+          githubRepoDir="${PWD}"
+          buildDir="/tmp/build"
+
+          echo "Previous version: ${current}"
+          echo "New version: ${latest}"
+
+          [[ "${current}" == "${latest}" ]] && exit 0
+
+          git config --global user.name ${{ secrets.MY_GIT_NAME }}
+          git config --global user.email ${{ secrets.MY_GIT_EMAIL }}
+          git clone ssh://aur@aur.archlinux.org/${AUR_PKG_NAME}.git ${aurRepoDir}
+
+          rsync --progress --delete -r --exclude={'*.gz','*.xz','.github','pkg','src','.git'} ${githubRepoDir}/ ${buildDir}/
+
+          cd ${buildDir}
+
+          useradd makepkg
+          chown makepkg:root . -R
+
+          sed "/^pkgver=/s/.*/pkgver=${latest}/" -i PKGBUILD
+          sed "/^pkgrel=/s/.*/pkgrel=1/" -i PKGBUILD
+
+          su makepkg -c "updpkgsums"
+          su makepkg -c "makepkg --printsrcinfo" > .SRCINFO
+
+          rsync --progress --delete -r --exclude={'*.gz','*.xz','.github','pkg','src','.git'} ${buildDir}/ ${githubRepoDir}/
+          rsync --progress --delete -r --exclude={'*.gz','*.xz','.github','pkg','src','.git'} ${buildDir}/ ${aurRepoDir}/
+
+          cd ${aurRepoDir}
+
+          git add .
+          git commit -m "Update ${AUR_PKG_NAME} to v${latest}"
+          git push origin master
+
+          cd ${githubRepoDir}
+
+          git add .
+          git commit -m "Update ${AUR_PKG_NAME} to v${latest}"
+          git push origin master
