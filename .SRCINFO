@@ -28,4 +28,3 @@ pkgbase = urbackup2-server
 	sha512sums = 34e25c868cf4572414fbc6c693877127152f9a97edf8865b4263a55cf16f71a5045ba96b1a9af8244ed49c35cab56e3fdb44348d191e9f85e2efb66392907132
 
 pkgname = urbackup2-server
-
