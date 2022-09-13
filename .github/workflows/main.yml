@@ -32,13 +32,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          curl -LO "https://repo.archlinuxcn.org/x86_64/${patched_glibc}" && \
-          bsdtar -C / -xvf "$patched_glibc" && \
-          rm ${patched_glibc} && \
           pacman -Syu --needed --noconfirm && \
           pacman -S --needed --noconfirm git binutils pacman-contrib openssh rsync
-        env:
-          patched_glibc: glibc-linux4-2.33-4-x86_64.pkg.tar.zst
 
       - name: Checkout Repository
         uses: actions/checkout@v2
@@ -51,11 +46,14 @@ jobs:
           githubRepoDir="${PWD}"
           buildDir="/tmp/build"
 
-          aurCommitMessage="$(git log -1 --pretty=format:%B)"
-
+          git config --global --add safe.directory ${GITHUB_WORKSPACE}
+          git config --global --add safe.directory ${aurRepoDir}
+          git config --global --add safe.directory ${githubRepoDir}
           git config --global user.name ${{ secrets.MY_GIT_NAME }}
           git config --global user.email ${{ secrets.MY_GIT_EMAIL }}
           git clone ssh://aur@aur.archlinux.org/${AUR_PKG_NAME}.git ${aurRepoDir}
+
+          aurCommitMessage="$(git log -1 --pretty=format:%B)"
 
           rsync --progress --delete -r --exclude={'*.gz','*.xz','.github','pkg','src','.git'} ${githubRepoDir}/ ${buildDir}/
 
