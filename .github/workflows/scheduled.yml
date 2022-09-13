@@ -1,5 +1,6 @@
 name: Scheduled AUR package update Workflow
 on:
+  workflow_dispatch: {}
   schedule:
     - cron: "30 15 * * 6"
 
