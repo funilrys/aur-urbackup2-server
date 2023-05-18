@@ -16,7 +16,7 @@ source=(
     "md5-bytes.patch"
 )
 install='urbackup.install'
-sha512sums=('13a21b5708fff5521b610fda4bc933b09d5dd7780a89b8cce202423b901273602fbbf29ca93e849f6bb2a86e604bb86c0b454f06676d399c2360db0526f74297'
+sha512sums=('893b04391f6e9b0b9abaa1cb5fa555d043d1efa834d2db9982610b7b7ca8db33c6cbcb9d55c4c9a1d360f499263271d62d6a9ed80d23f6b761ed1af05b29cab6'
             '34e25c868cf4572414fbc6c693877127152f9a97edf8865b4263a55cf16f71a5045ba96b1a9af8244ed49c35cab56e3fdb44348d191e9f85e2efb66392907132')
 
 CFLAGS="-march=native -O2 -pipe -fstack-protector-strong"
