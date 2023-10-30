@@ -44,7 +44,7 @@ jobs:
           GIT_SSH_COMMAND: "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
         run: |
           current=$(grep -P "^pkgver" PKGBUILD | cut -d= -f2)
-          latest=$(curl --silent "https://www.urbackup.org/downloads/Server/?C=M;O=D" | grep "folder.gif" | sed -r 's/.*href="([^"]+)\/.*/\1/g' | sort -u -i | tail -1)
+          latest=$(curl --silent "https://hndl.urbackup.org/Server/?C=M;O=D" | grep -E 'href="[[:digit:]]' | sed -r 's/.*href="([^"]+)\/.*/\1/g' | sort -u -i | tail -1)
 
           aurRepoDir=/tmp/${AUR_PKG_NAME}
           githubRepoDir="${PWD}"
