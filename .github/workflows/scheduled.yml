@@ -50,7 +50,6 @@ jobs:
           githubRepoDir="${PWD}"
           buildDir="/tmp/build"
 
-          git config --global --add safe.directory /__w/aur-cava/aur-cava
           git config --global --add safe.directory ${GITHUB_WORKSPACE}
           git config --global --add safe.directory ${aurRepoDir}
           git config --global --add safe.directory ${githubRepoDir}
